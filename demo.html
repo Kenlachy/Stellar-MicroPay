@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar MicroPay - Price Lookup Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">MicroPay Dashboard</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Price Lookup Widget -->
+            <div class="lg:col-span-1">
+                <div id="priceLookup" class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">Stellar DEX Price Lookup</h2>
+                    
+                    <!-- Asset Selection -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Base Asset (Sell)
+                            </label>
+                            <select id="baseAsset" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="XLM:">XLM (Native)</option>
+                                <option value="USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM3LXUU7EGZEFJX4M7Q6VKMCKM3G6">USDC (Custom)</option>
+                                <option value="USDT:GDOT5XLVJUPYKJRN3JZ4GQHPUVFMNIFZJEGLAY4M4FJTCRQJNLKCHQ2M">USDT (Custom)</option>
+                                <option value="EURT:GAP5LETOV6YIEVYWSNY6QXRYCQSFC3GRCPV6M5HCHYAU4AKH2F7M4R6I">EURT (Custom)</option>
+                            </select>
+                            <input type="text" id="baseIssuer" placeholder="Issuer address (if custom)" class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 hidden">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Counter Asset (Buy)
+                            </label>
+                            <select id="counterAsset" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="XLM:">XLM (Native)</option>
+                                <option value="USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM3LXUU7EGZEFJX4M7Q6VKMCKM3G6" selected>USDC (Custom)</option>
+                                <option value="USDT:GDOT5XLVJUPYKJRN3JZ4GQHPUVFMNIFZJEGLAY4M4FJTCRQJNLKCHQ2M">USDT (Custom)</option>
+                                <option value="EURT:GAP5LETOV6YIEVYWSNY6QXRYCQSFC3GRCPV6M5HCHYAU4AKH2F7M4R6I">EURT (Custom)</option>
+                            </select>
+                            <input type="text" id="counterIssuer" placeholder="Issuer address (if custom)" class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 hidden">
+                        </div>
+                    </div>
+
+                    <!-- Swap Button -->
+                    <div class="flex justify-center mb-4">
+                        <button onclick="swapAssets()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                            ⇅ Swap Assets
+                        </button>
+                    </div>
+
+                    <!-- Price Display -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div id="loading" class="text-center py-4 hidden">
+                            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                            <p class="mt-2 text-gray-600">Loading price data...</p>
+                        </div>
+
+                        <div id="error" class="text-center py-4 hidden">
+                            <p class="text-red-600" id="errorMessage"></p>
+                        </div>
+
+                        <div id="priceData" class="hidden">
+                            <div class="grid grid-cols-3 gap-4 mb-4">
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-600">Bid Price</p>
+                                    <p class="text-lg font-semibold text-green-600" id="bidPrice">-</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-600">Mid Price</p>
+                                    <p class="text-lg font-semibold text-blue-600" id="midPrice">-</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-600">Ask Price</p>
+                                    <p class="text-lg font-semibold text-red-600" id="askPrice">-</p>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center text-sm text-gray-500">
+                                <p id="pairInfo">XLM/USDC</p>
+                                <p class="mt-1">Auto-refreshes every 30 seconds</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Other dashboard content -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">Account Overview</h2>
+                    <p class="text-gray-600">
+                        Your Stellar account information and recent transactions will appear here.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional dashboard sections -->
+        <div class="mt-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Recent Activity</h2>
+                <p class="text-gray-600">
+                    Your recent payment activities and transaction history will be displayed here.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const HORIZON_URL = 'https://horizon.stellar.org';
+        let refreshInterval;
+
+        function parseAsset(assetString) {
+            const [code, issuer] = assetString.split(':');
+            return { code, issuer: issuer || undefined };
+        }
+
+        function formatAsset(asset) {
+            return asset.issuer ? `${asset.code}:${asset.issuer}` : asset.code;
+        }
+
+        async function fetchOrderbook(base, counter) {
+            const baseAsset = formatAsset(base);
+            const counterAsset = formatAsset(counter);
+            
+            const url = `${HORIZON_URL}/order_book?selling_asset=${baseAsset}&buying_asset=${counterAsset}`;
+            
+            try {
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                return {
+                    bids: data.bids || [],
+                    asks: data.asks || []
+                };
+            } catch (error) {
+                console.error('Error fetching orderbook:', error);
+                throw error;
+            }
+        }
+
+        function calculatePriceInfo(orderbook) {
+            if (orderbook.bids.length === 0 || orderbook.asks.length === 0) {
+                return null;
+            }
+            
+            const bestBid = parseFloat(orderbook.bids[0].price);
+            const bestAsk = parseFloat(orderbook.asks[0].price);
+            
+            return {
+                bid: bestBid,
+                ask: bestAsk,
+                mid: (bestBid + bestAsk) / 2
+            };
+        }
+
+        function formatPrice(price) {
+            return price.toFixed(6);
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString();
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('hidden', !show);
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('priceData').classList.add('hidden');
+        }
+
+        function showError(message) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('error').classList.remove('hidden');
+            document.getElementById('priceData').classList.add('hidden');
+        }
+
+        function showPriceData(priceInfo, baseAsset, counterAsset) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+            
+            document.getElementById('bidPrice').textContent = formatPrice(priceInfo.bid);
+            document.getElementById('midPrice').textContent = formatPrice(priceInfo.mid);
+            document.getElementById('askPrice').textContent = formatPrice(priceInfo.ask);
+            document.getElementById('pairInfo').textContent = `${baseAsset.code}/${counterAsset.code} • Updated: ${formatTime(new Date())}`;
+            
+            document.getElementById('priceData').classList.remove('hidden');
+        }
+
+        async function fetchPrice() {
+            const baseSelect = document.getElementById('baseAsset');
+            const counterSelect = document.getElementById('counterAsset');
+            const baseIssuer = document.getElementById('baseIssuer').value;
+            const counterIssuer = document.getElementById('counterIssuer').value;
+            
+            let baseAsset = parseAsset(baseSelect.value);
+            let counterAsset = parseAsset(counterSelect.value);
+            
+            if (baseIssuer) baseAsset.issuer = baseIssuer;
+            if (counterIssuer) counterAsset.issuer = counterIssuer;
+
+            if (!baseAsset.code || !counterAsset.code) {
+                showError('Please select both assets');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const orderbook = await fetchOrderbook(baseAsset, counterAsset);
+                const priceData = calculatePriceInfo(orderbook);
+                
+                if (priceData) {
+                    showPriceData(priceData, baseAsset, counterAsset);
+                } else {
+                    showError('No price data available for this pair');
+                }
+            } catch (err) {
+                showError(err.message || 'Failed to fetch price');
+            }
+        }
+
+        function swapAssets() {
+            const baseSelect = document.getElementById('baseAsset');
+            const counterSelect = document.getElementById('counterAsset');
+            const baseIssuer = document.getElementById('baseIssuer');
+            const counterIssuer = document.getElementById('counterIssuer');
+            
+            const tempValue = baseSelect.value;
+            const tempIssuer = baseIssuer.value;
+            
+            baseSelect.value = counterSelect.value;
+            baseIssuer.value = counterIssuer.value;
+            counterSelect.value = tempValue;
+            counterIssuer.value = tempIssuer;
+            
+            updateIssuerFields();
+            fetchPrice();
+        }
+
+        function updateIssuerFields() {
+            const baseSelect = document.getElementById('baseAsset');
+            const counterSelect = document.getElementById('counterAsset');
+            const baseIssuer = document.getElementById('baseIssuer');
+            const counterIssuer = document.getElementById('counterIssuer');
+            
+            const baseAsset = parseAsset(baseSelect.value);
+            const counterAsset = parseAsset(counterSelect.value);
+            
+            baseIssuer.classList.toggle('hidden', !baseAsset.issuer);
+            counterIssuer.classList.toggle('hidden', !counterAsset.issuer);
+        }
+
+        function setupAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+            refreshInterval = setInterval(fetchPrice, 30000);
+        }
+
+        // Event listeners
+        document.getElementById('baseAsset').addEventListener('change', () => {
+            updateIssuerFields();
+            fetchPrice();
+        });
+        
+        document.getElementById('counterAsset').addEventListener('change', () => {
+            updateIssuerFields();
+            fetchPrice();
+        });
+        
+        document.getElementById('baseIssuer').addEventListener('input', fetchPrice);
+        document.getElementById('counterIssuer').addEventListener('input', fetchPrice);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateIssuerFields();
+            fetchPrice();
+            setupAutoRefresh();
+        });
+    </script>
+</body>
+</html>
