@@ -1,10 +1,12 @@
 import React from 'react';
 import PriceLookup from '../components/PriceLookup';
 import SendPaymentForm from '../components/SendPaymentForm';
+import Navbar from '../components/Navbar';
 
 export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100">
+      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">MicroPay Dashboard</h1>
         

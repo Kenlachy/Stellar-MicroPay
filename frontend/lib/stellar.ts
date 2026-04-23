@@ -20,6 +20,45 @@ export interface PriceInfo {
   mid: number;
 }
 
+export interface NetworkFeeStats {
+  fee_charged: {
+    min: number;
+    max: number;
+    mode: number;
+    p10: number;
+    p20: number;
+    p30: number;
+    p40: number;
+    p50: number;
+    p60: number;
+    p70: number;
+    p80: number;
+    p90: number;
+    p95: number;
+    p99: number;
+  };
+  max_fee: {
+    min: number;
+    max: number;
+    mode: number;
+    p10: number;
+    p20: number;
+    p30: number;
+    p40: number;
+    p50: number;
+    p60: number;
+    p70: number;
+    p80: number;
+    p90: number;
+    p95: number;
+    p99: number;
+  };
+  last_ledger_base_fee: number;
+  ledger_capacity_usage: string;
+}
+
+export type NetworkStatus = 'normal' | 'elevated' | 'high';
+
 // Horizon API base URL
 const HORIZON_URL = 'https://horizon.stellar.org';
 
@@ -94,6 +133,79 @@ export async function fetchBaseFee(): Promise<number> {
     console.error('Error fetching base fee:', error);
     // Return default fee on error
     return 100;
+  }
+}
+
+/**
+ * Fetches network fee statistics from Stellar Horizon API
+ * @returns Promise<NetworkFeeStats>
+ */
+export async function fetchNetworkFeeStats(): Promise<NetworkFeeStats> {
+  try {
+    const response = await fetch(`${HORIZON_URL}/fee_stats`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching network fee stats:', error);
+    // Return default values on error
+    return {
+      fee_charged: {
+        min: 100,
+        max: 100,
+        mode: 100,
+        p10: 100,
+        p20: 100,
+        p30: 100,
+        p40: 100,
+        p50: 100,
+        p60: 100,
+        p70: 100,
+        p80: 100,
+        p90: 100,
+        p95: 100,
+        p99: 100
+      },
+      max_fee: {
+        min: 100,
+        max: 100,
+        mode: 100,
+        p10: 100,
+        p20: 100,
+        p30: 100,
+        p40: 100,
+        p50: 100,
+        p60: 100,
+        p70: 100,
+        p80: 100,
+        p90: 100,
+        p95: 100,
+        p99: 100
+      },
+      last_ledger_base_fee: 100,
+      ledger_capacity_usage: "0.5"
+    };
+  }
+}
+
+/**
+ * Classifies network fee status based on the current fee rate
+ * @param feeStats - Network fee statistics
+ * @returns NetworkStatus
+ */
+export function classifyNetworkStatus(feeStats: NetworkFeeStats): NetworkStatus {
+  const feeInXLM = stroopsToXLM(feeStats.last_ledger_base_fee);
+  
+  if (feeInXLM < 0.0001) {
+    return 'normal';
+  } else if (feeInXLM <= 0.001) {
+    return 'elevated';
+  } else {
+    return 'high';
   }
 }
 
