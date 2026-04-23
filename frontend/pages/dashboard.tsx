@@ -1,5 +1,6 @@
 import React from 'react';
 import PriceLookup from '../components/PriceLookup';
+import SendPaymentForm from '../components/SendPaymentForm';
 
 export default function Dashboard() {
   return (
@@ -13,14 +14,14 @@ export default function Dashboard() {
             <PriceLookup />
           </div>
           
-          {/* Other dashboard content can go here */}
+          {/* Send Payment Form */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold mb-4 text-gray-800">Account Overview</h2>
-              <p className="text-gray-600">
-                Your Stellar account information and recent transactions will appear here.
-              </p>
-            </div>
+            <SendPaymentForm 
+              onSend={(recipient, amount) => {
+                console.log('Sending payment:', { recipient, amount });
+                alert(`Payment of ${amount} XLM to ${recipient} would be sent here`);
+              }}
+            />
           </div>
         </div>
         

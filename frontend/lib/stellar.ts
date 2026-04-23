@@ -75,6 +75,38 @@ export function calculatePriceInfo(orderbook: OrderbookData): PriceInfo | null {
 }
 
 /**
+ * Fetches the current base fee from Stellar Horizon API
+ * @returns Promise<number> - Base fee in stroops (1 XLM = 10,000,000 stroops)
+ */
+export async function fetchBaseFee(): Promise<number> {
+  try {
+    const response = await fetch(`${HORIZON_URL}/fee_stats`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Return the last_ledger_base_fee in stroops
+    return data.last_ledger_base_fee || 100; // Default to 100 stroops (0.00001 XLM)
+  } catch (error) {
+    console.error('Error fetching base fee:', error);
+    // Return default fee on error
+    return 100;
+  }
+}
+
+/**
+ * Converts stroops to XLM
+ * @param stroops - Amount in stroops
+ * @returns number - Amount in XLM
+ */
+export function stroopsToXLM(stroops: number): number {
+  return stroops / 10000000;
+}
+
+/**
  * Common Stellar assets for convenience
  */
 export const COMMON_ASSETS: Record<string, StellarAsset> = {
